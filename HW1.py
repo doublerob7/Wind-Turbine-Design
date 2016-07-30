@@ -15,7 +15,7 @@ import functions as func
 # 3.a - Plot the wind speed at 80m from Jan 2014
 
 if 'data' not in locals():
-    data = func.ReadWindData('Laramie2005_2015.dat')
+    data = func.ReadWindData('data/Laramie2005_2015.dat')
 jan14 = data[9][0]
 
 # Convert speeds to 80m
@@ -39,8 +39,10 @@ plt.ylabel('Wind Speed [m/s]')
 plt.grid()
 
 plt.figure(2)
-hist = np.histogram(speed, 10, (0,80))
-plt.hist(speed)
+#hist = np.histogram(speed, 20, (0,80))
+bins = 30
+plt.hist(speed, bins)
+plt.show()
 
 
 # 3.b - Plot the average of each month over all years and compare it to the averages from 2014
