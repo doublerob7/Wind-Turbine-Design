@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 import functions as func
 
 
-# 3.a - Plot the wind speed at 80m from Jan 2014
+# Plot the wind speed at 80m from Jan 2014
 
 if 'data' not in locals():
     data = func.ReadWindData('data/Laramie2005_2015.dat')
@@ -26,10 +26,10 @@ z = 80
 speed = jan14[2]
 timemin = jan14[1]
 
-print max(speed)
+print(max(speed))
 for i,each in enumerate(speed):
     speed[i] = each*(z/zref)**a
-print np.max(speed)
+print(np.max(speed))
 
 plt.figure(1)
 plt.scatter(timemin, speed, label="Wind Speed at 80m in Jan 2014")
@@ -45,7 +45,7 @@ plt.hist(speed, bins)
 plt.show()
 
 
-# 3.b - Plot the average of each month over all years and compare it to the averages from 2014
+# Plot the average of each month over all years and compare it to the averages from 2014
 #data = ReadNcdcData('Laramie2005_2015.dat','','')
 #
 #print 'mo  mean(velocity)'

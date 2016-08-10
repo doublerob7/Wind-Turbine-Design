@@ -20,7 +20,7 @@ data = ReadWindData('Laramie2005_2015.dat')
     year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
 
-bins = range(0,40+1,1)
+bins = range(0, 40+1, 1)
 
 JanWindSpeed = data[0][0][2]
 JanWindSpeed = JanWindSpeed[:]
