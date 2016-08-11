@@ -111,7 +111,7 @@ def read_wind_data(filename, index, yr='all', mo='all'):
             year = str(int(_data_line[13:17]))
             month = _months[int(_data_line[17:19])]
 
-            # TODO - Break out of loop after the month changes
+            # TODO - Break out of loop after the month changes, or index for 'yearmo'
             if month != mo:
                 continue
 

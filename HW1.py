@@ -30,41 +30,51 @@ print(max(data.speed))
 data.convert_to_hub_height(z, zref, a)
 print(max(data.speed))
 
-# plt.figure(1)
-# plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
-# plt.legend(loc='upper left')
-# plt.xlabel('Minutes from beginning of month')
-# plt.ylabel('Wind Speed [m/s]')
-# plt.grid()
-#
-# plt.figure(2)
-# bins = 40
-# plt.hist(data.speed, bins)
-# plt.show()
+plt.figure(1)
+plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
+plt.legend(loc='upper left')
+plt.xlabel('Minutes from beginning of month')
+plt.ylabel('Wind Speed [m/s]')
+plt.grid()
+
+plt.figure(2)
+bins = 40
+plt.hist(data.speed, bins)
 
 
 # Plot the average of each month over all years and compare it to the averages from 2014
+_2014_data = {}
+month_data = {}
 for month in list(calendar.month_abbr):
-    _2014_data = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', month)
+    if month == '':
+        continue
+    _2014_data[month] = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', month)
     for year in range(2005, 2015):
-        month_data = func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month)
+        try:
+            _new_month_data = func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month)
+            # print(len(month_data[month]))
+            month_data[month] += _new_month_data.speed
+            # print('Appended', len(_new_month_data.speed), 'lines. New length:', len(month_data[month]))
+        except KeyError:
+            month_data[month] = \
+                func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month).speed
+            # print('Overwrote speed data')
+
+for month in list(calendar.month_abbr):
+    if month == '':
+        continue
+    try:
+        month_data['averages'].append(np.mean(month_data[month]))
+        _2014_data['averages'].append(np.mean(_2014_data[month].speed))
+    except KeyError:
+        month_data['averages'] = [np.mean(month_data[month])]
+        _2014_data['averages'] = [np.mean(_2014_data[month].speed)]
 
 
-# month_data = {}
-# for month in calendar.month_abbr:
-#     if month == '':
-#         continue
-#     for year in range(2005,2015):
-#         print('Calling read function with:', year, type(year), month, type(month))
-#         try:
-#             month_data[str(year)].append(func.read_wind_data('data/Laramie2005_2015.dat', str(year), month))
-#         except KeyError:
-#             month_data[str(year)] = [func.read_wind_data('data/Laramie2005_2015.dat', str(year), month)]
-
-
-#plt.figure(2)
-#plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],meanarray, color="blue", label="Monthly mean wind speed 2005-2014")
-#plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],yr2014, color="red", label="Monthly mean wind speed during 2014")
-#plt.legend(loc='lower left')
-#plt.xlabel('Months')
-#plt.ylabel('Mean Wind Speed [m/s]')
+plt.figure(3)
+plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], month_data['averages'], color="blue", label="Monthly mean wind speed 2005-2014")
+plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], _2014_data['averages'], color="red", label="Monthly mean wind speed during 2014")
+plt.legend(loc='lower left')
+plt.xlabel('Months')
+plt.ylabel('Mean Wind Speed [m/s]')
+plt.show()
