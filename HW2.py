@@ -19,6 +19,8 @@ data = ReadWindData('Laramie2005_2015.dat')
 ''' 3.(a) Determine the pdf for the wind velocity for each month, as well as a 
     year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
+for month in ['Jan', 'Apr', 'Jul', 'Oct']:
+    
 
 bins = range(0, 40+1, 1)
 
