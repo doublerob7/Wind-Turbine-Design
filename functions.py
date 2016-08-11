@@ -48,8 +48,6 @@ class MonthWindData:
         self.minutes = []
         self.speed = []
         self.direction = []
-        self.pressure = []
-        self.temperature = []
 
     def convert_to_hub_height(self, z, zref, a):
         for i, each in enumerate(self.speed):
@@ -126,8 +124,6 @@ def read_wind_data(filename, index, yr='all', mo='all'):
                 dttm = _data_line[13:25]
                 timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
                 windspeed = 0.44704 * float(_data_line[31:33])  # convert from mph to m/s
-                # pres = float(_data_line[107:112])
-                # temp = float(_data_line[85:87])
 
             except ValueError:
                 _badDataCount += 1
@@ -141,13 +137,11 @@ def read_wind_data(filename, index, yr='all', mo='all'):
             _wind_data.minutes.append(timemin)
             _wind_data.speed.append(windspeed)
             _wind_data.direction.append(winddir)
-            # _wind_data.pressure.append(pres)
-            # _wind_data.temperature.append(temp)
 
             _data_points += 1
                 
     print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
-          _badDataCount, 'Datapoints duplicated.')
+          _badDataCount, 'Datapoints rejected.')
     try:
         return _wind_data
     except:
