@@ -18,7 +18,8 @@ import functions as func
 
 if 'data' not in locals():
     index = func.index_file('data/Laramie2005_2015.dat')
-    data = func.read_wind_data('data/Laramie2005_2015.dat', '2014', 'Jan')
+    print(index['2014'])
+    data = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', 'Jan')
 
 # Convert speeds to 80m
 a = 0.19
@@ -43,14 +44,13 @@ print(max(data.speed))
 
 
 # Plot the average of each month over all years and compare it to the averages from 2014
+for month in list(calendar.month_abbr):
+    print(month)
+    _2014_data = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', month)
+    for year in range(2005, 2015):
+        print(year)
+        month_data = func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month)
 
-_2014_data = func.read_wind_data('data/Laramie2005_2015.dat', '2014', 'all')
-
-print(len(_2014_data.speed))
-# for month in calendar.month_abbr:
-#     if month == '':
-#         continue
-#     _2014_data.append(func.read_wind_data('data/Laramie2005_2015.dat', '2014', month))
 
 # month_data = {}
 # for month in calendar.month_abbr:
