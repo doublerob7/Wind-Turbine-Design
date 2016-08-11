@@ -27,8 +27,7 @@ law.
 
 '''
 def powerLaw(uref,z,zref,alpha):
-    u = uref * (z/zref) ** alpha
-    return u
+    return uref * (z/zref) ** alpha
 
 
 
@@ -36,119 +35,117 @@ def runningMeanFast(x, N):
     return np.convolve(x, np.ones((N,))/N)[(N-1):]
 
 
-''' ========================== ReadWindData() =================================
 
-Reads Wind Data from .dat file. Returns relevant data in the following format:
+class MonthWindData:
+    """Contains data and analysis methods for a months worth of wind data.
+    """
 
-data = [year1, year2, ..., year_n]
-year_n = [mo1, mo2, ..., mo12]
-mo_n = [dttmarray,timeminarray, windspeedarray, winddirarray, presarray, temparray]
+    def __init__(self, year, month):
+        # self.__name__ = name
+        self.year = year
+        self.month = month
+        self.datetime = []
+        self.minutes = []
+        self.speed = []
+        self.direction = []
 
-Thus: 
-data[0] would be the entire dataset from the first year.
-data[0][0] would be the entire dataset from the first month of the first year.
-data[0][0][0] would be the first data array from the first month of the first year.
-data[0][0][0][0] would be the first entry in the first data array.
+    def convert_to_hub_height(self, z, zref, a):
+        for i, each in enumerate(self.speed):
+            self.speed[i] = each * (z / zref) ** a
 
-EXAMPLE:
-data[3][5][2] would be the windspeed array from the 4th year, 6th month. This
-could easily be averaged by np.mean(data[3][5][2])
+    # def pdf(self):
+    #
+    #     return
 
-'''
-def ReadWindData(filename):
-    
-    import numpy as np    
-    
-    datapoints = 0
-    badDataCount = 0
-    reads = 0
+
+def index_file(filename):
+    """Reads a datafile and returns a dict index of the starting lines for each year
+    """
+
+    _reads = 0
+    _return_dict = {}
+
+    with open(filename, 'r') as _data_file:
+
+        _last_year = ''
+
+        for _data_line in _data_file:
+
+            _year = str(_data_line[13:17])
+
+            if _year != _last_year:
+                _return_dict[_year] = _reads
+                _last_year = _year
+
+            _reads += 1
+
+    return _return_dict
+
+
+def read_wind_data(filename, index, yr='all', mo='all'):
+    """Reads Wind Data from .dat file.
+    Returns relevant data by month as a data object of class MonthWindData
+
+    :type filename: str
+    :type index dict
+    :type yr: str
+    :type mo: str
+    """
+
+    import calendar
+    import itertools as it
+
+    _months = calendar.month_abbr
+    _data_points = 0
+    _badDataCount = 0
+    _reads = 0
     
     # OPEN FILE
-    with open(filename,'rb') as datafile:
-        lastdataline = [0,0,0,0,0,0]
-        try:
-            # LOOP OVER DATA LINES IN DATAFILE
-            for dataline in datafile:
-                reads +=1
-                
-                # EXTRACT YEAR, MONTH
-                year = dataline[13:17]
-                month = dataline[17:19]
-                
-                # BASIC ERROR HANDLING FOR FIRST LINE
-                try:
-                    # TRY TO INT THE YEAR, IF THIS FAILS, IT'S NOT A NUMBER
-                    year = int(year)
-                    month = int(month)
-                except ValueError:
-                    # IF INT(YEAR) FAILS, CONTINUE TO NEXT LINE IN DATAFILE
-                    #print 'int(year) or int(month) failed. Next dataline.'
+    with open(filename, 'rb') as datafile:
+
+        # LOOP OVER DATA LINES IN DATAFILE
+        for _data_line in it.islice(datafile, index[yr], index[str(int(yr)+1)]):
+            _reads += 1
+
+            # EXTRACT YEAR, MONTH
+            year = str(int(_data_line[13:17]))
+            month = _months[int(_data_line[17:19])]
+
+            # TODO - Break out of loop after the month changes, or index for 'yearmo'
+            if month != mo:
+                continue
+
+            # PARSE THE DATALINE
+            try:
+                winddir = float(_data_line[26:29])
+                if winddir > 360:
+                    _badDataCount += 1
                     continue
+                dttm = _data_line[13:25]
+                timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
+                windspeed = 0.44704 * float(_data_line[31:33])  # convert from mph to m/s
+
+            except ValueError:
+                _badDataCount += 1
+                continue
+
+            # PUT DATA INTO DATA OBJECT
+            if '_wind_data' not in locals():
+                _wind_data = MonthWindData(year, month)
+
+            _wind_data.datetime.append(dttm)
+            _wind_data.minutes.append(timemin)
+            _wind_data.speed.append(windspeed)
+            _wind_data.direction.append(winddir)
+
+            _data_points += 1
                 
-                # PARSE THE DATALINE 
-                try:
-                    dttm = dataline[13:25]
-                    timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
-                    windspeed = 0.44704 * np.float(dataline[31:33]) # convert from mph to m/s
-                    winddir = np.float(dataline[26:29])
-                    if winddir > 360:
-                        badDataCount +=1
-                        winddir = lastdataline[3]
-                
-                except:
-                    badDataCount +=1
-                    windspeed = lastdataline[2]
-                    winddir = lastdataline[3]
-                        
-                
-                pres = dataline[107:112]
-                temp = dataline[85:87]
-                
-                # GET THE YEAR POSITION FROM COMPILEDYEARS
-                try:
-                    # Try to get the position of the current year
-                    yearentry = np.where(year==compiledyears)[0][0]
-                except:
-                    try:
-                        # If the value doesn't exist, try to append it
-                        compiledyears = np.append(compiledyears,year)
-                    except NameError:
-                         # Otherwise the array doesn't exist, so create it
-                        compiledyears = np.array([year])
-                    yearentry = np.where(year==compiledyears)[0][0]
-                
-                
-                if 'data' not in locals():
-                    data = [[0]*12]
-                
-                try:
-                    data[yearentry][month-1][0].append(dttm)
-                    data[yearentry][month-1][1].append(timemin)
-                    data[yearentry][month-1][2].append(windspeed)
-                    data[yearentry][month-1][3].append(winddir)
-                    data[yearentry][month-1][4].append(pres)
-                    data[yearentry][month-1][5].append(temp)
-                    datapoints +=1
-                except IndexError:
-                    data.append([0]*12)
-                    data[yearentry][month-1] = [[dttm],[timemin],[windspeed],[winddir],[pres],[temp]]
-                    datapoints +=1
-                except TypeError:
-                    data[yearentry][month-1] = [[dttm],[timemin],[windspeed],[winddir],[pres],[temp]]
-                    datapoints +=1
-                
-                lastdataline = [dttm,timemin,windspeed,winddir,pres,temp]
-                
-        except:
-            print 'Whoa! Something bad happened!'
-            print reads, datapoints, dttm
-            print compiledyears, year, yearentry
-                
-    print reads,'Datalines read,',datapoints,'Datapoints kept,',badDataCount,'Datapoints duplicated.'     
+    print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
+          _badDataCount, 'Datapoints rejected.')
     try:
-        return data
+        return _wind_data
     except:
-        return 0
+        return None
         
 
 ''' ========================== getCLCD(filename,alpha) =================================
@@ -168,25 +165,25 @@ def getCLCD(filename, alpha):
         Cd1 = 0
         alpha1 = 0
         #LOOP OVER DATA LINES
-        for dataline in reader:
+        for _dataline in reader:
             
             #HANDLE THE FIRST LINE THAT ISN'T DATA
             try:
-                np.float(dataline[0])
+                np.float(_dataline[0])
             except:
                 continue
             
             #GRAB THE ALPHA FROM THIS LINE TO COMPARE
-            dataalpha = np.float(dataline[0])
+            dataalpha = np.float(_dataline[0])
             
             #CHECK ALPHA IN DATA AGAINST ALPHA GIVEN AND STORE Cl AND Cd
             if alpha > dataalpha:
-                Cl1 = np.float(dataline[1])
-                Cd1 = np.float(dataline[2])
+                Cl1 = np.float(_dataline[1])
+                Cd1 = np.float(_dataline[2])
                 alpha1 = dataalpha
             elif alpha < dataalpha:
-                Cl2 = np.float(dataline[1])
-                Cd2 = np.float(dataline[2])
+                Cl2 = np.float(_dataline[1])
+                Cd2 = np.float(_dataline[2])
                 
                 #CALCULATE SLOPE
                 Clm = (Cl2 - Cl1)/(dataalpha - alpha1)
@@ -376,13 +373,18 @@ def sigmoid(x, x0, k):
     
 
 
-''' ===== powerCurve(blade_properties,gen_properties,pitch_theta,vel,RPM) =====
 
-powerCurve takes as input the geometry of a blade (length, chord, twist, blade sections)
-the incoming wind velocity, the hub RPM and the number of blades and returns
-
-'''
 def powerCurve(blade_properties,gen_properties,pitch_theta,vel,RPM):
+    """powerCurve takes as input the geometry of a blade (length, chord, twist, blade sections)
+    the incoming wind velocity, the hub RPM and the number of blades and returns
+
+    :param blade_properties:
+    :param gen_properties:
+    :param pitch_theta:
+    :param vel:
+    :param RPM:
+    :return:
+    """
     import numpy as np
     
     hubpower = np.zeros(len(vel))
@@ -402,29 +404,30 @@ def powerCurve(blade_properties,gen_properties,pitch_theta,vel,RPM):
     P = gen_properties[2]
     gearratio = gen_properties[3]
     
-    for i in range( 0, len(theta_p) ):
+    for i in range(0, len(theta_p)):
         theta_p_pitch[i] = theta_p[i] + pitch_theta
         
-    for i,vel in enumerate(vel):
+    for i, vel in enumerate(vel):
         
-        BEM_data = BEM(r,chord,theta_p_pitch,vel,RPM,N_blades,filename)
+        BEM_data = BEM(r, chord, theta_p_pitch, vel, RPM, N_blades, filename)
         
         hubtorque[i] = BEM_data[7]
         hubpower[i] = BEM_data[8]
         
-        if np.isnan(hubtorque[i]) == True:
+        if np.isnan(hubtorque[i]):
             hubtorque[i] = 0
-        if np.isnan(hubpower[i]) == True:
+        if np.isnan(hubpower[i]):
             hubpower[i] = 0
-        print 'Hub Torque:  {0:.2f} kN m'.format(hubtorque[i]*10**-3),'Hub Power:  {0:.2f} kW'.format(hubpower[i]*10**-3)
+        print('Hub Torque:  {0:.2f} kN m'.format(hubtorque[i]*10**-3), 'Hub Power:  {0:.2f} kW'
+              .format(hubpower[i]*10**-3))
         
         if hubpower[i] > 450*10**3:
-            for j in range(i,len(hubpower)):
+            for j in range(i, len(hubpower)):
                 hubpower[j] = hubpower[i]
             break
         
         gentorque[i] = hubtorque[i] / gearratio
-        print 'Generator Torque:  {0:.2f} kN m'.format(-gentorque[i] *10**-3)
+        print('Generator Torque:  {0:.2f} kN m'.format(-gentorque[i] * 10 ** - 3))
 
     try:
         return [gentorque, hubpower]
