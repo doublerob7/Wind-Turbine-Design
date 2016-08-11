@@ -48,8 +48,6 @@ class MonthWindData:
         self.minutes = []
         self.speed = []
         self.direction = []
-        self.pressure = []
-        self.temperature = []
 
     def convert_to_hub_height(self, z, zref, a):
         for i, each in enumerate(self.speed):
@@ -73,33 +71,20 @@ def index_file(filename):
 
         for _data_line in _data_file:
 
-            _reads += 1
             _year = str(_data_line[13:17])
 
             if _year != _last_year:
                 _return_dict[_year] = _reads
+                _last_year = _year
+
+            _reads += 1
 
     return _return_dict
 
 
 def read_wind_data(filename, index, yr='all', mo='all'):
-    """ ========================== ReadWindData() =================================
-
-    Reads Wind Data from .dat file. Returns relevant data in the following format:
-
-    data = [year1, year2, ..., year_n]
-    year_n = [mo1, mo2, ..., mo12]
-    mo_n = [dttmarray,timeminarray, windspeedarray, winddirarray, presarray, temparray]
-
-    Thus:
-    data[0] would be the entire dataset from the first year.
-    data[0][0] would be the entire dataset from the first month of the first year.
-    data[0][0][0] would be the first data array from the first month of the first year.
-    data[0][0][0][0] would be the first entry in the first data array.
-
-    EXAMPLE:
-    data[3][5][2] would be the windspeed array from the 4th year, 6th month. This
-    could easily be averaged by np.mean(data[3][5][2])
+    """Reads Wind Data from .dat file.
+    Returns relevant data by month as a data object of class MonthWindData
 
     :type filename: str
     :type index dict
@@ -108,6 +93,7 @@ def read_wind_data(filename, index, yr='all', mo='all'):
     """
 
     import calendar
+    import itertools as it
 
     _months = calendar.month_abbr
     _data_points = 0
@@ -117,67 +103,45 @@ def read_wind_data(filename, index, yr='all', mo='all'):
     # OPEN FILE
     with open(filename, 'rb') as datafile:
 
-        try:
-            # LOOP OVER DATA LINES IN DATAFILE
-            for _data_line in datafile[index[yr]:]:
-                _reads += 1
-                
-                # EXTRACT YEAR, MONTH
-                year = _data_line[13:17]
-                month = _data_line[17:19]
-                
-                # BASIC ERROR HANDLING FOR FIRST LINE
-                try:
-                    # TRY TO INT THE YEAR, IF THIS FAILS, IT'S NOT A NUMBER
-                    year = str(int(year))
-                    month = _months[int(month)]
-                except ValueError:
-                    # IF INT(YEAR) FAILS, CONTINUE TO NEXT LINE IN DATAFILE
-                    # print 'int(year) or int(month) failed. Next data line.'
-                    continue
+        # LOOP OVER DATA LINES IN DATAFILE
+        for _data_line in it.islice(datafile, index[yr], index[str(int(yr)+1)]):
+            _reads += 1
 
-                # CHECK FOR ONLY THE DATA REQUESTED
-                if year != yr or month != mo:
-                    if year > yr:
-                        break
-                    continue
+            # EXTRACT YEAR, MONTH
+            year = str(int(_data_line[13:17]))
+            month = _months[int(_data_line[17:19])]
 
-                # PARSE THE DATALINE 
-                try:
-                    winddir = float(_data_line[26:29])
-                    if winddir > 360:
-                        _badDataCount += 1
-                        continue
-                    dttm = _data_line[13:25]
-                    timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
-                    windspeed = 0.44704 * float(_data_line[31:33])  # convert from mph to m/s
+            # TODO - Break out of loop after the month changes, or index for 'yearmo'
+            if month != mo:
+                continue
 
-                except:
+            # PARSE THE DATALINE
+            try:
+                winddir = float(_data_line[26:29])
+                if winddir > 360:
                     _badDataCount += 1
                     continue
+                dttm = _data_line[13:25]
+                timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
+                windspeed = 0.44704 * float(_data_line[31:33])  # convert from mph to m/s
 
-                pres = float(_data_line[107:112])
-                temp = float(_data_line[85:87])
+            except ValueError:
+                _badDataCount += 1
+                continue
 
-                # PUT DATA INTO DATA OBJECT
-                if '_wind_data' not in locals():
-                    _wind_data = MonthWindData(year, month)
+            # PUT DATA INTO DATA OBJECT
+            if '_wind_data' not in locals():
+                _wind_data = MonthWindData(year, month)
 
-                _wind_data.datetime.append(dttm)
-                _wind_data.minutes.append(timemin)
-                _wind_data.speed.append(windspeed)
-                _wind_data.direction.append(winddir)
-                _wind_data.pressure.append(pres)
-                _wind_data.temperature.append(temp)
+            _wind_data.datetime.append(dttm)
+            _wind_data.minutes.append(timemin)
+            _wind_data.speed.append(windspeed)
+            _wind_data.direction.append(winddir)
 
-                _data_points += 1
-
-        except:
-            print('Whoa! Something bad happened!')
-            print(_reads, _data_points, dttm)
+            _data_points += 1
                 
     print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
-          _badDataCount, 'Datapoints duplicated.')
+          _badDataCount, 'Datapoints rejected.')
     try:
         return _wind_data
     except:
