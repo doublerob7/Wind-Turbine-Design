@@ -25,7 +25,7 @@ class WindDataClass:
     """Contains data and analysis methods for a months worth of wind data.
     """
 
-    def __init__(self, filename, year, month):
+    def __init__(self, filename, year, month, debug=False):
         # self.__name__ = name
         self.year = year
         self.month = month
@@ -33,7 +33,7 @@ class WindDataClass:
         self.minutes = []
         self.speed = []
         self.direction = []
-        self.read_wind_data(filename, year, month)
+        self.read_wind_data(filename, year, month, debug)
 
     def convert_to_hub_height(self, z, zref, a):
         for i, each in enumerate(self.speed):
@@ -45,18 +45,29 @@ class WindDataClass:
         import numpy as np
         return np.histogram(self.speed, bins, density=True)
 
-    def read_wind_data(self, filename, yr='', mo=''):
+    def read_wind_data(self, filename, yr, mo, debug):
         """Reads Wind Data from .dat 'filename'.
             Returns relevant data by month as a data object of class MonthWindData
 
             :type filename: str
             :type yr: str
             :type mo: str
+            :type debug: bool
             """
 
         def _suck_data(file, start, end, _reads, _data_points, _badDataCount):
+
+            file.seek(0)
+
+            if debug:
+                _line = list(it.islice(file, start, start + 1))[0]
+                print('For', str(int(_line[13:17])), mo, ', between lines:', start, end)
+                print('Parsing', end - start, 'lines. Data is now', len(self.speed), 'lines long')
+                _old_data_points = _data_points
+
+                file.seek(0)
+
             # LOOP OVER DATA LINES IN DATAFILE
-            print(start, end)
             for _data_line in it.islice(file, start, end):
                 _reads += 1
 
@@ -81,6 +92,11 @@ class WindDataClass:
                 self.direction.append(winddir)
 
                 _data_points += 1
+
+            if debug:
+                print('Parsed', _data_points - _old_data_points, 'new lines. Data is now', len(self.speed),
+                  'lines long. Should be:', _data_points, '\n')
+
             return _reads, _data_points, _badDataCount
 
         def _next_month(_input):
@@ -93,10 +109,8 @@ class WindDataClass:
             except IndexError:
                 return 'Jan'
 
-        import calendar
         import itertools as it
 
-        _months = calendar.month_abbr[1:]
         _data_points = 0
         _badDataCount = 0
         _reads = 0
@@ -135,8 +149,7 @@ class WindDataClass:
                     _suck_data(datafile, _start, _end, _reads, _data_points, _badDataCount)
 
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
-              _badDataCount, 'Datapoints rejected.')
-
+              _badDataCount, 'Datapoints rejected.\n')
 
 
 def index_file(filename):
@@ -148,7 +161,7 @@ def index_file(filename):
     import calendar
 
     _reads = 0
-    _return_dict = {'keys': []}
+    _return_dict = {}
 
     with open(filename, 'r') as _data_file:
 
@@ -157,103 +170,28 @@ def index_file(filename):
 
         for _data_line in _data_file:
 
+            _reads += 1
+
             try:
                 _year = str(_data_line[13:17])
                 _month = calendar.month_abbr[int(_data_line[17:19])]
+
+                if _year != _last_year:
+                    _return_dict[_year] = _reads - 1
+                    _last_year = _year
+
+                if _month != _last_month:
+                    try:
+                        _return_dict[_month].append(_reads - 1)
+                    except KeyError:
+                        _return_dict[_month] = [_reads - 1]
+                    _last_month = _month
+
             except ValueError:
                 continue
 
-            if _year != _last_year:
-                _return_dict[_year] = _reads
-                _last_year = _year
-
-            if _month != _last_month:
-                try:
-                    _return_dict[_month].append(_reads)
-                except KeyError:
-                    _return_dict[_month] = [_reads]
-                _last_month = _month
-
-            _reads += 1
-
     return _return_dict
 
-
-def read_wind_data(filename, index, yr='all', mo='all'):
-    """Reads Wind Data from .dat file.
-    Returns relevant data by month as a data object of class MonthWindData
-
-    :type filename: str
-    :type index dict
-    :type yr: str
-    :type mo: str
-    """
-
-    import calendar
-    import itertools as it
-
-    _months = calendar.month_abbr
-    _data_points = 0
-    _badDataCount = 0
-    _reads = 0
-    
-    # OPEN FILE
-    with open(filename, 'rb') as datafile:
-
-        # SET START AND END POSITIONS FOR DATA BASED ON THE INDEX
-        if (yr == 'all') and (mo != 'all'):
-            _start_locs = []
-            _end_locs = []
-            for i, _month in enumerate(_months):
-                if _month == '':
-                    continue
-                _start_locs += [index[_month]]
-                _end_locs += [index[_months[i]]]
-        elif yr != 'all':
-            _start_locs = [index[yr]]
-            _end_locs = [index[str(int(yr)+1)]]
-
-        for (start, end) in (_start_locs, _end_locs):
-            # LOOP OVER DATA LINES IN DATAFILE
-            for _data_line in it.islice(datafile, start, end):
-                _reads += 1
-
-                # EXTRACT YEAR, MONTH
-                year = str(int(_data_line[13:17]))
-                month = _months[int(_data_line[17:19])]
-
-                # PARSE THE DATALINE
-                try:
-                    winddir = float(_data_line[26:29])
-                    if winddir > 360:
-                        _badDataCount += 1
-                        continue
-                    dttm = _data_line[13:25]
-                    timemin = int(dttm[6:8])*1440 + int(dttm[8:10])*60 + int(dttm[10:])
-                    windspeed = 0.44704 * float(_data_line[31:33])  # convert from mph to m/s
-
-                except ValueError:
-                    _badDataCount += 1
-                    continue
-
-                # PUT DATA INTO DATA OBJECT
-                if '_wind_data' not in locals():
-                    _wind_data = MonthWindData(year, month)
-
-                _wind_data.datetime.append(dttm)
-                _wind_data.minutes.append(timemin)
-                _wind_data.speed.append(windspeed)
-                _wind_data.direction.append(winddir)
-
-                _data_points += 1
-
-    print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
-          _badDataCount, 'Datapoints rejected.')
-    try:
-        return _wind_data
-    except:
-        return None
-        
 
 ''' ========================== getCLCD(filename,alpha) =================================
 

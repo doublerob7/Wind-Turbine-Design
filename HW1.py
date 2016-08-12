@@ -46,8 +46,8 @@ for month in list(calendar.month_abbr[1:]):
     _2014_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', '2014', month)
     month_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', 'all', month)
 
-    _2014_data.convert_to_hub_height(z, zref, a)
-    month_data.convert_to_hub_height(z, zref, a)
+    _2014_data[month].convert_to_hub_height(z, zref, a)
+    month_data[month].convert_to_hub_height(z, zref, a)
 
 
 for month in list(calendar.month_abbr[1:]):
