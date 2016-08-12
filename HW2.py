@@ -10,15 +10,21 @@ Homework #2
 
 ''' Setup Litany '''
 import numpy as np
-import scipy as sp
+# import scipy as sp
 import matplotlib.pyplot as plt
+
+import functions as func
+
 #clear_all()
 
-data = ReadWindData('Laramie2005_2015.dat')
 
 ''' 3.(a) Determine the pdf for the wind velocity for each month, as well as a 
     year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
+index = func.index_file('data/Laramie2005_2015.dat')
+data = {}
+for month in ['Jan', 'Apr', 'Jul', 'Oct']:
+    data[month] = func.read_wind_data('data/Laramie2005_2015.dat', index, yr='all', mo=month)
 
 bins = range(0, 40+1, 1)
 
