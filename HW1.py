@@ -16,10 +16,7 @@ import functions as func
 
 # Plot the wind speed at 80m from Jan 2014
 
-if 'data' not in locals():
-    index = func.index_file('data/Laramie2005_2015.dat')
-    print(index['2014'])
-    data = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', 'Jan')
+data = func.WindDataClass('data/Laramie2005_2015.dat', '2014', 'Jan')
 
 # Convert speeds to 80m
 a = 0.19
@@ -45,29 +42,20 @@ plt.hist(data.speed, bins)
 # Plot the average of each month over all years and compare it to the averages from 2014
 _2014_data = {}
 month_data = {}
-for month in list(calendar.month_abbr):
-    if month == '':
-        continue
-    _2014_data[month] = func.read_wind_data('data/Laramie2005_2015.dat', index, '2014', month)
-    for year in range(2005, 2015):
-        try:
-            _new_month_data = func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month)
-            # print(len(month_data[month]))
-            month_data[month] += _new_month_data.speed
-            # print('Appended', len(_new_month_data.speed), 'lines. New length:', len(month_data[month]))
-        except KeyError:
-            month_data[month] = \
-                func.read_wind_data('data/Laramie2005_2015.dat', index, str(year), month).speed
-            # print('Overwrote speed data')
+for month in list(calendar.month_abbr[1:]):
+    _2014_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', '2014', month)
+    month_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', 'all', month)
 
-for month in list(calendar.month_abbr):
-    if month == '':
-        continue
+    _2014_data[month].convert_to_hub_height(z, zref, a)
+    month_data[month].convert_to_hub_height(z, zref, a)
+
+
+for month in list(calendar.month_abbr[1:]):
     try:
-        month_data['averages'].append(np.mean(month_data[month]))
+        month_data['averages'].append(np.mean(month_data[month].speed))
         _2014_data['averages'].append(np.mean(_2014_data[month].speed))
     except KeyError:
-        month_data['averages'] = [np.mean(month_data[month])]
+        month_data['averages'] = [np.mean(month_data[month].speed)]
         _2014_data['averages'] = [np.mean(_2014_data[month].speed)]
 
 
