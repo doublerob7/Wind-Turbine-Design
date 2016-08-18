@@ -34,8 +34,9 @@ class WindDataClass:
         self.speed = []
         self.direction = []
         self.read_wind_data(filename, year, month, debug)
+        self.convert_to_hub_height()
 
-    def convert_to_hub_height(self, z, zref, a):
+    def convert_to_hub_height(self, z=80, zref=10, a=.19):
         for i, each in enumerate(self.speed):
             self.speed[i] = each * (z / zref) ** a
 
@@ -150,6 +151,31 @@ class WindDataClass:
 
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
               _badDataCount, 'Datapoints rejected.\n')
+
+    def plot(self, thing1, thing2='', label='', xlabel='', ylabel=''):
+        """
+
+        :param thing1: str
+        :param thing2: str
+        :param label: str
+        :param xlabel: str
+        :param ylabel: str
+        :return: None
+        """
+        import numpy as np
+        import matplotlib.pyplot as plt
+
+        plt.figure()
+        plt.grid()
+
+        if (thing1 == 'speed') and (thing2 == 'minutes'):
+            plt.scatter(self.minutes, self.speed, color="red", label=label)
+            plt.legend(loc='lower left')
+            plt.xlabel(xlabel)
+            plt.ylabel(ylabel)
+
+        if thing1 == 'pdf':
+            plt.hist(self.speed, bins='auto')
 
 
 def index_file(filename):

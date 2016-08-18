@@ -21,65 +21,28 @@ import functions as func
 ''' 3.(a) Determine the pdf for the wind velocity for each month, as well as a 
     year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
-index = func.index_file('data/Laramie2005_2015.dat')
 data = {}
-for month in ['Jan', 'Apr', 'Jul', 'Oct']:
-    data[month] = func.read_wind_data('data/Laramie2005_2015.dat', index, yr='all', mo=month)
+hist = {}
+for month in ['Jan', 'Apr', 'Jul', 'Oct', 'all']:
+    data[month] = func.WindDataClass('data/Laramie2005_2015.dat', year='all', month=month)
+    hist[month] = list(np.histogram(data[month].speed, bins=25, density=True)[0])
 
-bins = range(0, 40+1, 1)
+plt.figure()
+plt.scatter(list(range(len(hist['Jan']))), hist['Jan'], color='black', marker='x')
+plt.scatter(list(range(len(hist['Apr']))), hist['Apr'], color='black', marker='+')
+plt.scatter(list(range(len(hist['Jul']))), hist['Jul'], color='black', marker='o')
+plt.scatter(list(range(len(hist['Oct']))), hist['Oct'], color='black', marker='x', alpha=0.5)
+plt.bar(list(range(len(hist['all']))), hist['all'], color='blue', linestyle='--')
+plt.show()
 
-JanWindSpeed = data[0][0][2]
-JanWindSpeed = JanWindSpeed[:]
-AprWindSpeed = data[0][3][2]
-AprWindSpeed = AprWindSpeed[:]
-JulWindSpeed = data[0][6][2]
-JulWindSpeed = JulWindSpeed[:]
-OctWindSpeed = data[0][9][2]
-OctWindSpeed = OctWindSpeed[:]
-yearWindSpeed = data[0][0][2]
-yearWindSpeed = yearWindSpeed[:]
 
-for i in range(0,9+1):
-    for speed in data[i][0][2]:
-        JanWindSpeed.append(speed)
-    for speed in data[i][3][2]:
-        AprWindSpeed.append(speed)
-    for speed in data[i][6][2]:
-        JulWindSpeed.append(speed)
-    for speed in data[i][9][2]:
-        OctWindSpeed.append(speed)
-    for j in range(0,10+1):
-        for speed in data[i][j][2]:
-            yearWindSpeed.append(speed)
-        
-
-Janhistdata = np.histogram(JanWindSpeed, bins, density=True)
-Aprhistdata = np.histogram(AprWindSpeed, bins, density=True)
-Julhistdata = np.histogram(JulWindSpeed, bins, density=True)
-Octhistdata = np.histogram(OctWindSpeed, bins, density=True)
-yearhistdata = np.histogram(yearWindSpeed, bins, density=True)
-
-plt.figure(1)
-plt.plot(Janhistdata[1][0:len(Janhistdata[1])-1], Janhistdata[0])
-plt.figure(2)
-plt.plot(Aprhistdata[1][0:len(Janhistdata[1])-1], Aprhistdata[0])
-plt.figure(3)
-plt.plot(Julhistdata[1][0:len(Janhistdata[1])-1], Julhistdata[0])
-plt.figure(4)
-plt.plot(Octhistdata[1][0:len(Janhistdata[1])-1], Octhistdata[0])
-plt.figure(5)
-plt.plot(yearhistdata[1][0:len(Janhistdata[1])-1], yearhistdata[0])
-plt.figure(6)
-plt.plot(Janhistdata[1][0:len(Janhistdata[1])-1], Janhistdata[0])
-plt.plot(Aprhistdata[1][0:len(Janhistdata[1])-1], Aprhistdata[0])
-plt.plot(Julhistdata[1][0:len(Janhistdata[1])-1], Julhistdata[0])
-plt.plot(Octhistdata[1][0:len(Janhistdata[1])-1], Octhistdata[0])
 
 
     
 ''' 3.(b) Using the pdf, determine the mean wind velocity and the wind variance
     for all periods from 3.(a). Provide a table. '''
-    
+
+
 
     
     
