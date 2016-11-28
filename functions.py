@@ -26,6 +26,7 @@ class WindDataClass:
     """
 
     def __init__(self, filename, year, month, debug=False):
+        from scipy import mean
         # self.__name__ = name
         self.year = year
         self.month = month
@@ -33,18 +34,48 @@ class WindDataClass:
         self.minutes = []
         self.speed = []
         self.direction = []
+        self.density = []
+        self.bin_edges = []
+        self.bin_centers = []
         self.read_wind_data(filename, year, month, debug)
         self.convert_to_hub_height()
+        self.mean = mean(self.speed)
+        self.pdf_mean = 0
+        self.variance = 0
 
     def convert_to_hub_height(self, z=80, zref=10, a=.19):
         for i, each in enumerate(self.speed):
             self.speed[i] = each * (z / zref) ** a
 
-    def pdf(self, bins='auto'):
+    def pdf(self, bins='auto', debug=False):
         """Calculates the Probability Density Function of the data requested
         """
-        import numpy as np
-        return np.histogram(self.speed, bins, density=True)
+        from numpy import histogram, diff, float64, average
+        self.density, self.bin_edges = histogram(self.speed, bins, density=True)
+        self.density *= diff(self.bin_edges)
+
+        try:
+            assert (sum(self.density) - float64(1.0)) < 1e-9
+            if debug:
+                print('Sum density assertion check passed', sum(self.density) - float64(1.0))
+        except AssertionError:
+            print('AssertionError! sum(self.density) =', sum(self.density), type(sum(self.density)))
+            print(sum(self.density) - float64(1.0))
+
+        self.calc_bin_centers()
+        self.pdf_mean = average(self.bin_centers, weights=self.density)
+        self.calc_variance()
+
+    def calc_variance(self):
+        from numpy import var
+        self.variance = var(self.speed)
+
+    def calc_bin_centers(self):
+        center_range = range(0, len(self.density))
+        for i in center_range:
+            next_edge = self.bin_edges[i+1]
+            this_edge = self.bin_edges[i]
+            self.bin_centers.append((next_edge - this_edge) / 2 + this_edge)
 
     def read_wind_data(self, filename, yr, mo, debug):
         """Reads Wind Data from .dat 'filename'.
@@ -152,31 +183,6 @@ class WindDataClass:
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
               _badDataCount, 'Datapoints rejected.\n')
 
-    def plot(self, thing1, thing2='', label='', xlabel='', ylabel=''):
-        """
-
-        :param thing1: str
-        :param thing2: str
-        :param label: str
-        :param xlabel: str
-        :param ylabel: str
-        :return: None
-        """
-        import numpy as np
-        import matplotlib.pyplot as plt
-
-        plt.figure()
-        plt.grid()
-
-        if (thing1 == 'speed') and (thing2 == 'minutes'):
-            plt.scatter(self.minutes, self.speed, color="red", label=label)
-            plt.legend(loc='lower left')
-            plt.xlabel(xlabel)
-            plt.ylabel(ylabel)
-
-        if thing1 == 'pdf':
-            plt.hist(self.speed, bins='auto')
-
 
 def index_file(filename):
     """Reads a datafile and returns a dict index
@@ -219,35 +225,30 @@ def index_file(filename):
     return _return_dict
 
 
-''' ========================== getCLCD(filename,alpha) =================================
-
-Reads C_L and C_D data from 'filename'. Returns interpolated C_L and C_D at alpha.
-
-'''
-
-def getCLCD(filename, alpha):
+def get_CLCD(filename, alpha):
+    """ Reads C_L and C_D data from 'filename'. Returns interpolated C_L and C_D at alpha. """
     
     import numpy as np
     import csv
-    #OPEN THE FILE
+    # OPEN THE FILE
     with open(filename, 'rb') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         Cl1 = 0
         Cd1 = 0
         alpha1 = 0
-        #LOOP OVER DATA LINES
+        # LOOP OVER DATA LINES
         for _dataline in reader:
             
-            #HANDLE THE FIRST LINE THAT ISN'T DATA
+            # HANDLE THE FIRST LINE THAT ISN'T DATA
             try:
                 np.float(_dataline[0])
             except:
                 continue
             
-            #GRAB THE ALPHA FROM THIS LINE TO COMPARE
+            # GRAB THE ALPHA FROM THIS LINE TO COMPARE
             dataalpha = np.float(_dataline[0])
             
-            #CHECK ALPHA IN DATA AGAINST ALPHA GIVEN AND STORE Cl AND Cd
+            # CHECK ALPHA IN DATA AGAINST ALPHA GIVEN AND STORE Cl AND Cd
             if alpha > dataalpha:
                 Cl1 = np.float(_dataline[1])
                 Cd1 = np.float(_dataline[2])
@@ -256,11 +257,11 @@ def getCLCD(filename, alpha):
                 Cl2 = np.float(_dataline[1])
                 Cd2 = np.float(_dataline[2])
                 
-                #CALCULATE SLOPE
+                # CALCULATE SLOPE
                 Clm = (Cl2 - Cl1)/(dataalpha - alpha1)
                 Cdm = (Cd2 - Cd1)/(dataalpha - alpha1)
                 
-                #CALCULATE VALUE
+                # CALCULATE VALUE
                 Cl = Cl1 + Clm * (alpha-alpha1)
                 Cd = Cd1 + Cdm * (alpha-alpha1)
                 
@@ -279,19 +280,14 @@ def getCLCD(filename, alpha):
         return [0, 0]
 
 
-
-''' ============ BEM(r[],chord[],theta_p[],ux1,RPM,N_blades,filename['']) =============
-
-BEM() Performs a blade element momentum analysis for given wing parameters. 
-Returns alpha, C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power
-
-'''
-def BEM(r,chord,theta_p,ux1,RPM,N_blades,filename):
+def BEM(r, chord, theta_p, ux1, RPM, N_blades, filename):
+    """BEM() Performs a blade element momentum analysis for given wing parameters.
+    Returns alpha, C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power"""
     import numpy as np
     
     R = (r[1]-r[0])/2 + r[len(r)-1]
-    rho = 1.23 # kg/m^3
-    omega = (np.float(RPM)/60) * 2 * np.pi # rads/s
+    rho = 1.23  # kg/m^3
+    omega = (np.float(RPM)/60) * 2 * np.pi  # rads/s
     
     alpha = np.zeros(9)
     alpha_corr = np.zeros(9)
@@ -312,7 +308,7 @@ def BEM(r,chord,theta_p,ux1,RPM,N_blades,filename):
     a_prime = 0.1 * np.ones(9)
     a_prime_corr = np.zeros(9)
     
-    for i in range(0,8+1):
+    for i in range(0, 8+1):
     
         tol = 1
         itera = 0
