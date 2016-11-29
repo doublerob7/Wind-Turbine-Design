@@ -16,7 +16,7 @@ import functions as func
 
 # Plot the wind speed at 80m from Jan 2014
 
-data = func.WindDataClass('data/Laramie2005_2015.dat', '2014', 'Jan')
+data = func.WindDataReader('data/Laramie2005_2015.dat', '2014', 'Jan')
 
 # Convert speeds to 80m
 a = 0.19
@@ -43,11 +43,8 @@ plt.hist(data.speed, bins)
 _2014_data = {}
 month_data = {}
 for month in list(calendar.month_abbr[1:]):
-    _2014_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', '2014', month)
-    month_data[month] = func.WindDataClass('data/Laramie2005_2015.dat', 'all', month)
-
-    _2014_data[month].convert_to_hub_height(z, zref, a)
-    month_data[month].convert_to_hub_height(z, zref, a)
+    _2014_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', '2014', month)
+    month_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', 'all', month)
 
 
 for month in list(calendar.month_abbr[1:]):

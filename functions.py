@@ -22,8 +22,7 @@ if __name__ == "__main__":
 
 
 class WindDataReader:
-    """Contains data and analysis methods for a months worth of wind data.
-    """
+    """ Reads a months worth of wind data and parses it. """
 
     def __init__(self, filename, yr, mo, debug=False):
         self.filename = filename
