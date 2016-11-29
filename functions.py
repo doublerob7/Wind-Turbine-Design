@@ -287,7 +287,7 @@ def get_CLCD(filename, alpha):
     import numpy as np
     import csv
     # OPEN THE FILE
-    with open(filename, 'rb') as csvfile:
+    with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         Cl1 = 0
         Cd1 = 0

@@ -11,10 +11,10 @@ Homework #3
 """ Problem 3. Blade Momentum Analysis """
 
 import numpy as np
-import math
 import matplotlib.pyplot as plot
+import functions as func
 
-clear_all()
+# clear_all()
 
 """ Given Parameters """
 
@@ -44,7 +44,7 @@ F_N_corr = np.zeros(9)
 F_T = np.zeros(9)
 F_T_corr = np.zeros(9) 
 
-filename = ['DU97W300AoAClCd.csv','DU91W250AoAClCd.csv','DU95W180AoAClCd.csv']
+filename = ['data\DU97W300AoAClCd.csv','data\DU91W250AoAClCd.csv','data\DU95W180AoAClCd.csv']
 
 # step 1: Guess the induction factors a and a'
     
@@ -80,7 +80,7 @@ for i in range(0,8+1):
         
         # step 4: Determine C_L(alpha) and C_D(alpha) using airfoil properties
         
-        CLCD = getCLCD(currentfile,alpha_deg[i])
+        CLCD = func.get_CLCD(currentfile,alpha_deg[i])
         Cl = CLCD[0]
         Cd = CLCD[1]
         
@@ -112,7 +112,7 @@ for i in range(0,8+1):
         tol = abs(a[i] - lasta)/lasta
         itera += 1
         
-    print 'Sec:',i+1, 'Iter:', itera, ' a: {0:.6}'.format(a[i]),' lasta: {0:.6}'.format(lasta),' alpha: {0:.6}'.format(alpha_deg[i]), ' Tolerance:',tol
+    print('Sec:',i+1, 'Iter:', itera, ' a: {0:.6}'.format(a[i]),' lasta: {0:.6}'.format(lasta),' alpha: {0:.6}'.format(alpha_deg[i]), ' Tolerance:',tol)
         
     # Prandtl Tip correction calcs
     f = N_blades/2*(R-r[i])/(r[i]*np.sin(phi))
@@ -126,7 +126,7 @@ for i in range(0,8+1):
     alpha_corr[i] = phi_corr - np.radians(theta_p[i])
     alpha_corr_deg[i] = np.degrees(alpha_corr[i])
     
-    CLCD_corr = getCLCD(currentfile,alpha_corr_deg[i])
+    CLCD_corr = func.get_CLCD(currentfile, alpha_corr_deg[i])
     Cl_corr = CLCD_corr[0]
     Cd_corr = CLCD_corr[1]
     
@@ -138,7 +138,7 @@ for i in range(0,8+1):
     
     #print '\n',f,F,'\n'
 
-print '\n'
+print('\n')
 
 """ (a) Plot the local angle of attack, alpha, in degrees as a function of r.
 Plot with and without the Prantl tip correction """
@@ -185,22 +185,22 @@ using the Prantl correction. """
 # Thrust: the total normal force acting along the entire length of all 3 blades
 sectionlength = r[1] - r[0]
 thrust = 0
-for i,section in enumerate(r):
+for i, section in enumerate(r):
     thrust += F_N_corr[i] * sectionlength
         
 thrust *= N_blades
-print 'Total Thrust:  {0:.2f} kN'.format(thrust*10**-3)
+print('Total Thrust:  {0:.2f} kN'.format(thrust*10**-3))
 
 # Torque: sum(F_T[i] x r[i]) the sum of each tangential force times it's radius
 torque = 0
-for i,section in enumerate(r):
+for i, section in enumerate(r):
     torque += F_T_corr[i]*r[i] * sectionlength
         
 torque *= N_blades
-print 'Total Torque:  {0:.2f} kN m'.format(torque*10**-3)
+print('Total Torque:  {0:.2f} kN m'.format(torque*10**-3))
 
 # Power: torque x angular velocity
 power = torque * omega
-print 'Total Power:  {0:.2f} kW'.format(power*10**-3)
+print('Total Power:  {0:.2f} kW'.format(power*10**-3))
 
-
+plot.show()
