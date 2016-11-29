@@ -21,31 +21,24 @@ if __name__ == "__main__":
     clear_all()
 
 
-class WindDataClass:
-    """Contains data and analysis methods for a months worth of wind data.
-    """
+class WindDataReader:
+    """ Reads a months worth of wind data and parses it. """
 
-    def __init__(self, filename, year, month, debug=False):
-        # self.__name__ = name
-        self.year = year
-        self.month = month
+    def __init__(self, filename, yr, mo, debug=False):
+        self.filename = filename
+        self.year = yr
+        self.month = mo
         self.datetime = []
         self.minutes = []
         self.speed = []
         self.direction = []
-        self.read_wind_data(filename, year, month, debug)
+        self.read_wind_data(filename, yr, mo, debug)
 
-    def convert_to_hub_height(self, z, zref, a):
+    def convert_to_hub_height(self, z=80, zref=10, a=.19):
         for i, each in enumerate(self.speed):
             self.speed[i] = each * (z / zref) ** a
 
-    def pdf(self, bins='auto'):
-        """Calculates the Probability Density Function of the data requested
-        """
-        import numpy as np
-        return np.histogram(self.speed, bins, density=True)
-
-    def read_wind_data(self, filename, yr, mo, debug):
+    def read_wind_data(self, filename, yr, mo, debug=False):
         """Reads Wind Data from .dat 'filename'.
             Returns relevant data by month as a data object of class MonthWindData
 
@@ -150,6 +143,101 @@ class WindDataClass:
 
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
               _badDataCount, 'Datapoints rejected.\n')
+        self.convert_to_hub_height()
+
+
+class WindStats(WindDataReader):
+    """ Extends WindDataReader class with analysis methods for wind data """
+
+    def __init__(self, filename, year, month, bin_width, debug=False):
+        super().__init__(filename, year, month, debug)
+        self._bin_width = bin_width
+        self._pdf = None
+        self._pdf_mean = None
+        self._mean = None
+        self._variance = None
+        self._weibull_params = None
+        self._rayleigh_params = None
+        self.bin_centers = []
+
+    @property
+    def bin_width(self):
+        return self._bin_width
+
+    @bin_width.setter
+    def bin_width(self, value):
+        if self._bin_width is None:
+            self._bin_width = int(value)
+
+    @property
+    def variance(self):
+        if self._variance is None:
+            from scipy import var
+            self._variance = var(self.speed)
+        return self._variance
+
+    @property
+    def mean(self):
+        if self._mean is None:
+            from scipy import mean
+            self._mean = mean(self.speed)
+        return self._mean
+
+    @property
+    def pdf(self):
+        if self._pdf is None:
+            from scipy import histogram
+            self._pdf = histogram(self.speed, range(0, 50, self.bin_width), density=True)
+        return self._pdf
+
+    @property
+    def pdf_mean(self):
+        if self._pdf_mean is None:
+            from scipy import average
+            self.calc_bin_centers()
+            try:
+                self._pdf_mean = average(self.bin_centers, weights=self.pdf[0])
+            except:
+                print(self.bin_centers, len(self.bin_centers))
+                print(self.pdf[0], len(self.pdf[0]))
+        return self._pdf_mean
+
+    @property
+    def weibull_params(self):
+        if self._weibull_params is None:
+            from scipy.stats import exponweib
+            self._weibull_params = exponweib.fit(self.speed, floc=0)
+        return self._weibull_params
+
+    @property
+    def rayleigh_params(self):
+        if self._rayleigh_params is None:
+            from scipy.stats import rayleigh
+            self._rayleigh_params = rayleigh.fit(self.speed, floc=0)
+        return self._rayleigh_params
+
+    def calc_bin_centers(self):
+        center_range = range(0, len(self.pdf[0]))
+        for i in center_range:
+            next_edge = self.pdf[1][i + 1]
+            this_edge = self.pdf[1][i]
+            self.bin_centers.append((next_edge - this_edge) / 2 + this_edge)
+
+    def plot_pdf_fit(self, label=None):
+        import matplotlib.pyplot as plt
+        from scipy.stats import exponweib, rayleigh
+        from scipy import linspace, diff
+
+        plt.bar(self.pdf[1][:len(self.pdf[0])], self.pdf[0], width=diff(self.pdf[1]), label=label, alpha=0.5, color='k')
+
+        x = linspace(0, 50, 1000)
+
+        plt.plot(x, exponweib.pdf(x, a=self.weibull_params[0], c=self.weibull_params[1], scale=self.weibull_params[3]), 'b--', label='Exponential Weibull pdf')
+        plt.plot(x, rayleigh.pdf(x, scale=self.rayleigh_params[1]), 'r--', label='Rayleigh pdf')
+
+        plt.title('Normalized distribution of wind speeds')
+        plt.grid()
+        plt.legend()
 
 
 def index_file(filename):
@@ -193,35 +281,30 @@ def index_file(filename):
     return _return_dict
 
 
-''' ========================== getCLCD(filename,alpha) =================================
-
-Reads C_L and C_D data from 'filename'. Returns interpolated C_L and C_D at alpha.
-
-'''
-
-def getCLCD(filename, alpha):
+def get_CLCD(filename, alpha):
+    """ Reads C_L and C_D data from 'filename'. Returns interpolated C_L and C_D at alpha. """
     
     import numpy as np
     import csv
-    #OPEN THE FILE
-    with open(filename, 'rb') as csvfile:
+    # OPEN THE FILE
+    with open(filename, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=',')
         Cl1 = 0
         Cd1 = 0
         alpha1 = 0
-        #LOOP OVER DATA LINES
+        # LOOP OVER DATA LINES
         for _dataline in reader:
             
-            #HANDLE THE FIRST LINE THAT ISN'T DATA
+            # HANDLE THE FIRST LINE THAT ISN'T DATA
             try:
                 np.float(_dataline[0])
             except:
                 continue
             
-            #GRAB THE ALPHA FROM THIS LINE TO COMPARE
+            # GRAB THE ALPHA FROM THIS LINE TO COMPARE
             dataalpha = np.float(_dataline[0])
             
-            #CHECK ALPHA IN DATA AGAINST ALPHA GIVEN AND STORE Cl AND Cd
+            # CHECK ALPHA IN DATA AGAINST ALPHA GIVEN AND STORE Cl AND Cd
             if alpha > dataalpha:
                 Cl1 = np.float(_dataline[1])
                 Cd1 = np.float(_dataline[2])
@@ -230,11 +313,11 @@ def getCLCD(filename, alpha):
                 Cl2 = np.float(_dataline[1])
                 Cd2 = np.float(_dataline[2])
                 
-                #CALCULATE SLOPE
+                # CALCULATE SLOPE
                 Clm = (Cl2 - Cl1)/(dataalpha - alpha1)
                 Cdm = (Cd2 - Cd1)/(dataalpha - alpha1)
                 
-                #CALCULATE VALUE
+                # CALCULATE VALUE
                 Cl = Cl1 + Clm * (alpha-alpha1)
                 Cd = Cd1 + Cdm * (alpha-alpha1)
                 
@@ -253,19 +336,14 @@ def getCLCD(filename, alpha):
         return [0, 0]
 
 
-
-''' ============ BEM(r[],chord[],theta_p[],ux1,RPM,N_blades,filename['']) =============
-
-BEM() Performs a blade element momentum analysis for given wing parameters. 
-Returns alpha, C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power
-
-'''
-def BEM(r,chord,theta_p,ux1,RPM,N_blades,filename):
+def BEM(r, chord, theta_p, ux1, RPM, N_blades, filename):
+    """BEM() Performs a blade element momentum analysis for given wing parameters.
+    Returns alpha, C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power"""
     import numpy as np
     
     R = (r[1]-r[0])/2 + r[len(r)-1]
-    rho = 1.23 # kg/m^3
-    omega = (np.float(RPM)/60) * 2 * np.pi # rads/s
+    rho = 1.23  # kg/m^3
+    omega = (np.float(RPM)/60) * 2 * np.pi  # rads/s
     
     alpha = np.zeros(9)
     alpha_corr = np.zeros(9)
@@ -286,7 +364,7 @@ def BEM(r,chord,theta_p,ux1,RPM,N_blades,filename):
     a_prime = 0.1 * np.ones(9)
     a_prime_corr = np.zeros(9)
     
-    for i in range(0,8+1):
+    for i in range(0, 8+1):
     
         tol = 1
         itera = 0
