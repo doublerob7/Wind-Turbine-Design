@@ -19,6 +19,6 @@ The pitch of the turbine blades is considered in order to broaden the range of p
 The turbine model is now considered in the context of a wind plant, consisting of several turbines to meet the power demands of a simulated city. The city's power consumption is modeled as a full-high full-low cycle over the course of the day; full-high for daylight hours, full-low for night hours. A storage capacity is considered to smooth out the highly variable wind power, and a minimum storage capacity is calculated to provide continuous power to the city.
 
 ## Roadmap - TODO
-- [ ] Complete step 2, statistical analysis
+- [x] Complete step 2, statistical analysis
 - [ ] Complete step 4, blade loads
 - [ ] Model wind turbine in CAD
