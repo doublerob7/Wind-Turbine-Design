@@ -1,7 +1,7 @@
 #Wind Turbine Design
 
 ## Description
-This repo contains the Python 2.7 code developed for ME 4470 Wind and Ocean Energy, taught Fall 2015. The code handles the design and analysis of a wind turbine plant through several intermediary steps starting with wind and airfoil data.
+This repo contains the Python 3 code developed for ME 4470 Wind and Ocean Energy, taught Fall 2015. The code handles the design and analysis of a wind turbine plant through several intermediary steps starting with wind and airfoil data.
 
 ###Step 1 - Reading and formatting raw wind data
 Real, logged wind data recorded at Laramie Regional Airport is read and formatted for use.
