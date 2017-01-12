@@ -1,2 +1,6 @@
 pdfs/
+.idea/
+.vscode/
+__pycache__/
 test.py
+weibull-test.py
