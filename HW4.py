@@ -11,7 +11,6 @@ Homework #4
 
 """ Setup """
 import numpy as np
-import math
 import matplotlib.pyplot as plt
 from functions import BEM
 
