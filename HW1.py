@@ -176,9 +176,11 @@ class WindDataReader:
 
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
               _badDataCount, 'Datapoints rejected.\n')
+        self.convert_to_hub_height()
 
 
 if __name__ == '__main__':
+
     # Plot the wind speed at 80m from Jan 2014
 
     data = WindDataReader('data/Laramie2005_2015.dat', '2014', 'Jan')
@@ -192,6 +194,7 @@ if __name__ == '__main__':
     data.convert_to_hub_height(z, zref, a)
     print(max(data.speed))
 
+
     plt.figure()
     plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
     plt.legend(loc='upper left')
@@ -202,7 +205,6 @@ if __name__ == '__main__':
     # plt.figure(2)
     # bins = 40
     # plt.hist(data.speed, bins)
-
 
     # Plot the average of each month over all years and compare it to the averages from 2014
     _2014_data = {}

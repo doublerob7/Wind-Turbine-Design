@@ -270,6 +270,7 @@ if __name__ == '__main__':
 
     blade.calculations(ux1=ux1, num_blades=N_blades, rho=rho, debug=True)
 
+
     """ (a) Plot the local angle of attack, alpha, in degrees as a function of r.
     Plot with and without the Prantl tip correction """
 
