@@ -1,0 +1,3 @@
+Total Thrust:  43.93 kN
+Total Torque:  106.45 kN m
+Total Power:  334.43 kW

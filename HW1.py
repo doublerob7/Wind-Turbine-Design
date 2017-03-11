@@ -176,54 +176,59 @@ class WindDataReader:
 
         print('For ', yr, mo, ': ', _reads, 'Datalines read,', _data_points, 'Datapoints kept,',
               _badDataCount, 'Datapoints rejected.\n')
+        self.convert_to_hub_height()
 
 
-# Plot the wind speed at 80m from Jan 2014
+if __name__ == '__main__':
 
-data = WindDataReader('data/Laramie2005_2015.dat', '2014', 'Jan')
+    # Plot the wind speed at 80m from Jan 2014
 
-# Convert speeds to 80m
-a = 0.19
-zref = 10
-z = 80
+    data = WindDataReader('data/Laramie2005_2015.dat', '2014', 'Jan')
 
-print(max(data.speed))
-data.convert_to_hub_height(z, zref, a)
-print(max(data.speed))
+    # Convert speeds to 80m
+    a = 0.19
+    zref = 10
+    z = 80
 
-plt.figure(1)
-plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
-plt.legend(loc='upper left')
-plt.xlabel('Minutes from beginning of month')
-plt.ylabel('Wind Speed [m/s]')
-plt.grid()
-
-plt.figure(2)
-bins = 40
-plt.hist(data.speed, bins)
+    print(max(data.speed))
+    data.convert_to_hub_height(z, zref, a)
+    print(max(data.speed))
 
 
-# Plot the average of each month over all years and compare it to the averages from 2014
-_2014_data = {}
-month_data = {}
-for month in list(calendar.month_abbr[1:]):
-    _2014_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', '2014', month)
-    month_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', 'all', month)
+    plt.figure()
+    plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
+    plt.legend(loc='upper left')
+    plt.xlabel('Minutes from beginning of month')
+    plt.ylabel('Wind Speed [m/s]')
+    plt.grid()
+
+    # plt.figure(2)
+    # bins = 40
+    # plt.hist(data.speed, bins)
+
+    # Plot the average of each month over all years and compare it to the averages from 2014
+    _2014_data = {}
+    month_data = {}
+    for month in list(calendar.month_abbr[1:]):
+        _2014_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', '2014', month)
+        month_data[month] = func.WindDataReader('data/Laramie2005_2015.dat', 'all', month)
 
 
-for month in list(calendar.month_abbr[1:]):
-    try:
-        month_data['averages'].append(np.mean(month_data[month].speed))
-        _2014_data['averages'].append(np.mean(_2014_data[month].speed))
-    except KeyError:
-        month_data['averages'] = [np.mean(month_data[month].speed)]
-        _2014_data['averages'] = [np.mean(_2014_data[month].speed)]
+    for month in list(calendar.month_abbr[1:]):
+        try:
+            month_data['averages'].append(np.mean(month_data[month].speed))
+            _2014_data['averages'].append(np.mean(_2014_data[month].speed))
+        except KeyError:
+            month_data['averages'] = [np.mean(month_data[month].speed)]
+            _2014_data['averages'] = [np.mean(_2014_data[month].speed)]
 
 
-plt.figure(3)
-plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], month_data['averages'], color="blue", label="Monthly mean wind speed 2005-2014")
-plt.scatter([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], _2014_data['averages'], color="red", label="Monthly mean wind speed during 2014")
-plt.legend(loc='lower left')
-plt.xlabel('Months')
-plt.ylabel('Mean Wind Speed [m/s]')
-plt.show()
+    plt.figure()
+    plt.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], month_data['averages'], color="blue", label="Monthly mean wind speed 2005-2014")
+    plt.plot([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], _2014_data['averages'], color="red", label="Monthly mean wind speed during 2014")
+    plt.legend(loc='lower left')
+    plt.xlabel('Months')
+    plt.ylabel('Mean Wind Speed [m/s]')
+    plt.grid()
+    plt.show()
+

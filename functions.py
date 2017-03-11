@@ -391,7 +391,7 @@ def BEM(r, chord, theta_p, ux1, RPM, N_blades, filename):
             
             # step 4: Determine C_L(alpha) and C_D(alpha) using airfoil properties
             
-            CLCD = getCLCD(currentfile,alpha_deg[i])
+            CLCD = get_CLCD(currentfile, alpha_deg[i])
             Cl = CLCD[0]
             Cd = CLCD[1]
             
@@ -437,7 +437,7 @@ def BEM(r, chord, theta_p, ux1, RPM, N_blades, filename):
         alpha_corr[i] = phi_corr - np.radians(theta_p[i])
         alpha_corr_deg[i] = np.degrees(alpha_corr[i])
         
-        CLCD_corr = getCLCD(currentfile,alpha_corr_deg[i])
+        CLCD_corr = get_CLCD(currentfile, alpha_corr_deg[i])
         Cl_corr = CLCD_corr[0]
         Cd_corr = CLCD_corr[1]
         
@@ -474,9 +474,9 @@ def BEM(r, chord, theta_p, ux1, RPM, N_blades, filename):
     #print 'Total Power:  {0:.2f} kW'.format(power*10**-3)        
         
     try:
-        return np.degrees(alpha),np.degrees(alpha_corr), C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power
+        return np.degrees(alpha), np.degrees(alpha_corr), C_N_corr, C_T_corr, F_N_corr, F_T_corr, thrust, torque, power
     except:
-        return [0,0,0,0,0,0,0,0]
+        return [0, 0, 0, 0, 0, 0, 0, 0]
         
         
 ''' ============ BEM(r[],chord[],theta_p[],ux1,RPM,N_blades,filename['']) =============
