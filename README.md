@@ -1,6 +1,12 @@
 #Wind Turbine Design
+###Dependancies
+NumPy
+SciPy
 
-Please check out the project wiki for more imformation about each step
+###Usage
+Each step of the project is contained within it's own .py file. Each file is designed to be able to be imported into later steps, while the calculations for each step happen when the file is run on it's own. Figures and data are outputted to the output/ folder.
+
+Please check out the project wiki for more information about each step.
 
 ## TODO
 - [x] Step 1, Wind data input
