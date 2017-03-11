@@ -9,9 +9,9 @@ ME 4470 Wind Ocean Energy Homework 5
 @author: Robert Ressler
 """
 
-""" Setup """
 import numpy as np
 import matplotlib.pyplot as plot
+from Step_3 import TurbineBlade
 
 
 nns = [1.000, 1.005, 1.010, 1.015, 1.020, 1.025, 1.030, 1.035, 1.040]
