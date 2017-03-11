@@ -12,9 +12,9 @@ Please check out the project wiki for more information about each step.
 - [x] Step 1, Wind data input
 - [x] Complete step 2, statistical analysis
 - [x] Step 3, BEM
-- [ ] Complete step 4, blade loads
+- [x] Complete step 4, blade loads
 - [ ] Check accuracy of Step 5
 - [x] Step 6, Pitch control
 - [x] Step 7, Storage
 - [ ] Model wind turbine in CAD
-- [ ] Upload images
+- [x] Upload images
