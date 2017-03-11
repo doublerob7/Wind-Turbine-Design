@@ -38,6 +38,8 @@ class TurbineBlade:
         self._sec_tang_coef = []
         self._sec_alpha = []
         self._sec_alpha_corr = []
+        self._sec_norm_coef_uncorr = []
+        self._sec_tang_coef_uncorr = []
 
         try:
             assert len(filenames) == len(section_radii)
@@ -121,8 +123,8 @@ class TurbineBlade:
         from numpy import arctan, degrees, radians, cos, sin, pi, arccos, exp
 
         # step 1: Guess the induction factors a and a'
-        a = 0.1
-        a_prime = 0.1
+        a = 0.15
+        a_prime = 0.15
 
         tol = 1
         itera = 0
@@ -180,28 +182,30 @@ class TurbineBlade:
         F_N_corr = C_N_corr * .5 * rho * chord * (w ** 2)
         F_T_corr = C_T_corr * .5 * rho * chord * (w ** 2)
 
-        return alpha_deg, alpha_corr_deg, C_N_corr, C_T_corr, F_N_corr, F_T_corr
+        return alpha_deg, alpha_corr_deg, C_N_corr, C_T_corr, F_N_corr, F_T_corr, C_N, C_T
 
     def calculations(self, ux1=10, num_blades=3, rho=1.23, debug=False):
         for file, radius, theta_P, chord in zip(self.file_names, self.sec_radii, self.sec_theta_p, self.sec_chord):
-            a, a_corr, C_N, C_T, F_N, F_T = self.blade_element_momentum(file, radius, theta_P, chord, ux1, num_blades, rho, debug)
+            a, a_corr, C_N_corr, C_T_corr, F_N, F_T, C_N, C_T = self.blade_element_momentum(file, radius, theta_P, chord, ux1, num_blades, rho, debug)
             self._sec_alpha.append(a)
             self._sec_alpha_corr.append(a_corr)
-            self._sec_norm_coef.append(C_N)
-            self._sec_tang_coef.append(C_T)
+            self._sec_norm_coef.append(C_N_corr)
+            self._sec_tang_coef.append(C_T_corr)
             self._sec_norm_force.append(F_N)
             self._sec_tang_force.append(F_T)
+            self._sec_norm_coef_uncorr.append(C_N)
+            self._sec_tang_coef_uncorr.append(C_T)
 
     @property
     def thrust(self):
         if self._thrust is None:
-            self._thrust = sum([force * self.sec_length for force in self.sec_norm_force])
+            self._thrust = sum((force * self.sec_length for force in self.sec_norm_force))
         return self._thrust
 
     @property
     def torque(self):
         if self._torque is None:
-            self._torque = sum([force * radius * self.sec_length for force, radius in zip(self.sec_tang_force, self.sec_radii)])
+            self._torque = sum((force * radius * self.sec_length for force, radius in zip(self.sec_tang_force, self.sec_radii)))
         return self._torque
 
     @property
@@ -277,44 +281,56 @@ if __name__ == '__main__':
     plot.figure(1)
     plot.plot(blade.sec_radii, blade.sec_alpha, 'k-', label="AoA without Prandtl correction")
     plot.plot(blade.sec_radii, blade.sec_alpha_corr, 'k--', label="AoA with Prandtl correction")
-    plot.legend(loc='lower left')
+    plot.legend(loc='upper left')
     plot.title('Angle of attack over the length of the blade')
     plot.xlabel('Radius: hub to tip midpoints [m]')
     plot.ylabel('AoA, alpha [deg]')
     plot.grid()
+    plot.savefig(filename="output\step3_AoA.png", format='png')
 
     """ (b) Plot the local Normal and Tangential force Coefficients as a function
     of r. Plot with and without the Prantl tip correction. """
 
-    plot.figure(2)
+    plot.figure(num=2, figsize=(7, 8))
+    plot.subplot(2, 1, 1)
+    plot.plot(blade.sec_radii, blade._sec_norm_coef_uncorr, 'k--', label="Normal Coef without Prandtl correction")
     plot.plot(blade.sec_radii, blade.sec_norm_coef, 'k-', label="Normal Coef with Prandtl correction")
-    plot.plot(blade.sec_radii, blade.sec_tang_coef, 'k--', label="Tangential Coef with Prandtl correction")
-    plot.legend(loc='upper left')
+    plot.legend(loc='lower right')
+    plot.title('Force Coefficients along blade length')
+    plot.ylabel('Force coefficient')
+    plot.grid()
+    plot.subplot(2, 1, 2)
+    plot.plot(blade.sec_radii, blade._sec_tang_coef_uncorr, 'k--', label="Tangential Coef without Prandtl correction")
+    plot.plot(blade.sec_radii, blade.sec_tang_coef, 'k-', label="Tangential Coef with Prandtl correction")
+    plot.legend(loc='upper right')
     plot.title('Force Coefficients along blade length')
     plot.xlabel('Radius: hub to tip midpoints [m]')
     plot.ylabel('Force coefficient')
     plot.grid()
+    plot.savefig(filename="output\step3_force_coeff.png", format='png')
 
     plot.figure(3)
-    plot.plot(blade.sec_radii, blade.sec_norm_force, 'k-', label="Normal Force with Prandtl correction")
-    plot.plot(blade.sec_radii, blade.sec_tang_force, 'k--', label="Tangential Force with Prandtl correction")
+    plot.plot(blade.sec_radii, blade.sec_norm_force, 'k-', label="Normal Force")
+    plot.plot(blade.sec_radii, blade.sec_tang_force, 'k--', label="Tangential Force")
     plot.legend(loc='upper left')
     plot.title('Force along blade length')
     plot.xlabel('Radius: hub to tip midpoints [m]')
     plot.ylabel('Force [N]')
     plot.grid()
+    plot.savefig(filename="output\step3_blade_loads.png", format='png')
 
 
     """ (c) Determine total Thrust, Torque and Power experienced by the blades
     using the Prantl correction. """
 
-    # Thrust: the total normal force acting along the entire length of all 3 blades
-    print('Total Thrust:  {0:.2f} kN'.format(N_blades * blade.thrust * 10 ** -3))
+    with open("output\step3_hub_parameters.txt", "w") as file:
+        # Thrust: the total normal force acting along the entire length of all 3 blades
+        print('Total Thrust:  {0:.2f} kN'.format(N_blades * blade.thrust * 10 ** -3), file=file)
 
-    # Torque: sum(F_T[i] x r[i]) the sum of each tangential force times it's radius
-    print('Total Torque:  {0:.2f} kN m'.format(N_blades * blade.torque * 10 ** -3))
+        # Torque: sum(F_T[i] x r[i]) the sum of each tangential force times it's radius
+        print('Total Torque:  {0:.2f} kN m'.format(N_blades * blade.torque * 10 ** -3), file=file)
 
-    # Power: torque x angular velocity
-    print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3))
+        # Power: torque x angular velocity
+        print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3), file=file)
 
     plot.show()
