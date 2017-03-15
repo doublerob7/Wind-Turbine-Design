@@ -194,17 +194,13 @@ if __name__ == '__main__':
     data.convert_to_hub_height(z, zref, a)
     print(max(data.speed))
 
-
     plt.figure()
-    plt.scatter(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
+    plt.plot(data.minutes, data.speed, label="Wind Speed at 80m in Jan 2014")
     plt.legend(loc='upper left')
     plt.xlabel('Minutes from beginning of month')
     plt.ylabel('Wind Speed [m/s]')
     plt.grid()
-
-    # plt.figure(2)
-    # bins = 40
-    # plt.hist(data.speed, bins)
+    plt.savefig(filename="output\step1_jan_2014_wind_data.png", format="png")
 
     # Plot the average of each month over all years and compare it to the averages from 2014
     _2014_data = {}
@@ -230,5 +226,7 @@ if __name__ == '__main__':
     plt.xlabel('Months')
     plt.ylabel('Mean Wind Speed [m/s]')
     plt.grid()
+    plt.savefig(filename="output\step1_wind_averages.png", format="png")
+
     plt.show()
 
