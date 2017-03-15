@@ -195,6 +195,7 @@ class TurbineBlade:
             self._sec_tang_force.append(F_T)
             self._sec_norm_coef_uncorr.append(C_N)
             self._sec_tang_coef_uncorr.append(C_T)
+        return self
 
     @property
     def thrust(self):
@@ -272,7 +273,7 @@ if __name__ == '__main__':
     blade = TurbineBlade(length=R, min_aero_radius=blade_min_r, section_radii=r, section_twist=theta_p,
                          section_chord=chord, RPM=RPM, filenames=filenames)
 
-    blade.calculations(ux1=ux1, num_blades=N_blades, rho=rho, debug=True)
+    blade.calculations(ux1=ux1, num_blades=N_blades, rho=rho, debug=False)
 
 
     """ (a) Plot the local angle of attack, alpha, in degrees as a function of r.
@@ -322,6 +323,9 @@ if __name__ == '__main__':
 
     """ (c) Determine total Thrust, Torque and Power experienced by the blades
     using the Prantl correction. """
+    print('Total Thrust:  {0:.2f} kN'.format(N_blades * blade.thrust * 10 ** -3))
+    print('Total Torque:  {0:.2f} kN m'.format(N_blades * blade.torque * 10 ** -3))
+    print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3))
 
     with open("output\step3_hub_parameters.txt", "w") as file:
         # Thrust: the total normal force acting along the entire length of all 3 blades
@@ -333,4 +337,4 @@ if __name__ == '__main__':
         # Power: torque x angular velocity
         print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3), file=file)
 
-    plot.show()
+    # plot.show()
