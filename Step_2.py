@@ -99,7 +99,8 @@ class WindStats(WindDataReader):
 
         x = linspace(0, 50, 1000)
 
-        plt.plot(x, exponweib.pdf(x, a=self.weibull_params[0], c=self.weibull_params[1], scale=self.weibull_params[3]), 'b--', label='Exponential Weibull pdf')
+        plt.plot(x, exponweib.pdf(x, a=self.weibull_params[0], c=self.weibull_params[1], scale=self.weibull_params[3]),
+                 'b--', label='Exponential Weibull pdf')
         plt.plot(x, rayleigh.pdf(x, scale=self.rayleigh_params[1]), 'r--', label='Rayleigh pdf')
 
         plt.title('Normalized distribution of wind speeds')
@@ -107,54 +108,76 @@ class WindStats(WindDataReader):
         plt.legend()
 
 if __name__ == '__main__':
-    ''' 3.(a) Determine the pdf for the wind velocity for each month, as well as a
-        year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
-    bin_width = 2
+    with open("output\step2_output.txt", "w") as file:
+        ''' 3.(a) Determine the pdf for the wind velocity for each month, as well as a
+            year. Plot Jan, Apr, July, Oct and a yearly total of all 10 years. '''
 
-    jan_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Jan', bin_width=bin_width)
-    apr_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Apr', bin_width=bin_width)
-    jul_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Jul', bin_width=bin_width)
-    oct_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Oct', bin_width=bin_width)
-    all_data = WindStats('data/Laramie2005_2015.dat', year='all', month='all', bin_width=bin_width)
+        bin_width = 2
 
-    bins = range(0, 40, bin_width)
+        jan_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Jan', bin_width=bin_width)
+        apr_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Apr', bin_width=bin_width)
+        jul_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Jul', bin_width=bin_width)
+        oct_data = WindStats('data/Laramie2005_2015.dat', year='all', month='Oct', bin_width=bin_width)
+        all_data = WindStats('data/Laramie2005_2015.dat', year='all', month='all', bin_width=bin_width)
 
-    plt.hist(jan_data.speed, bins, normed=True, histtype='step', color='blue', label='Jan')
-    plt.hist(apr_data.speed, bins, normed=True, histtype='step', color='red', label='Apr')
-    plt.hist(jul_data.speed, bins, normed=True, histtype='step', color='orange', label='Jul')
-    plt.hist(oct_data.speed, bins, normed=True, histtype='step', color='green', label='Oct')
-    plt.hist(all_data.speed, bins, normed=True, histtype='step', color='black', label='All')
+        bins = range(0, 40, bin_width)
 
-    plt.title('Normalized distribution of wind speeds')
-    plt.grid()
-    plt.legend()
+        plt.hist(jan_data.speed, bins, normed=True, histtype='step', color='blue', label='Jan')
+        plt.hist(apr_data.speed, bins, normed=True, histtype='step', color='red', label='Apr')
+        plt.hist(jul_data.speed, bins, normed=True, histtype='step', color='orange', label='Jul')
+        plt.hist(oct_data.speed, bins, normed=True, histtype='step', color='green', label='Oct')
+        plt.hist(all_data.speed, bins, normed=True, histtype='step', color='black', label='All')
 
+        plt.title('Normalized distribution of wind speeds')
+        plt.grid()
+        plt.legend()
 
-    ''' 3.(b) Using the pdf, determine the mean wind velocity and the wind variance
-        for all periods from 3.(a). Provide a table. '''
+        plt.savefig(filename="output\step2_histogram_comp.png", format="png")
 
-    print("Month |", "Standard Mean |", "PDF Mean |", "Variance")
+        ''' 3.(b) Using the pdf, determine the mean wind velocity and the wind variance
+            for all periods from 3.(a). Provide a table. '''
 
-    print('{:^6}'.format(jan_data.month), '{:^15.2f}'.format(jan_data.mean), '{:^10.2f}'.format(jan_data.pdf_mean), '{:^10.2f}'.format(jan_data.variance))
-    print('{:^6}'.format(apr_data.month), '{:^15.2f}'.format(apr_data.mean), '{:^10.2f}'.format(apr_data.pdf_mean), '{:^10.2f}'.format(apr_data.variance))
-    print('{:^6}'.format(jul_data.month), '{:^15.2f}'.format(jul_data.mean), '{:^10.2f}'.format(jul_data.pdf_mean), '{:^10.2f}'.format(jul_data.variance))
-    print('{:^6}'.format(oct_data.month), '{:^15.2f}'.format(oct_data.mean), '{:^10.2f}'.format(oct_data.pdf_mean), '{:^10.2f}'.format(oct_data.variance))
-    print('{:^6}'.format(all_data.month), '{:^15.2f}'.format(all_data.mean), '{:^10.2f}'.format(all_data.pdf_mean), '{:^10.2f}'.format(all_data.variance))
+        print("Month |", "Standard Mean |", "PDF Mean |", "Variance", file=file)
 
+        print('{:^6}'.format(jan_data.month), '{:^15.2f}'.format(jan_data.mean), '{:^10.2f}'.format(jan_data.pdf_mean),
+              '{:^10.2f}'.format(jan_data.variance), file=file)
+        print('{:^6}'.format(apr_data.month), '{:^15.2f}'.format(apr_data.mean), '{:^10.2f}'.format(apr_data.pdf_mean),
+              '{:^10.2f}'.format(apr_data.variance), file=file)
+        print('{:^6}'.format(jul_data.month), '{:^15.2f}'.format(jul_data.mean), '{:^10.2f}'.format(jul_data.pdf_mean),
+              '{:^10.2f}'.format(jul_data.variance), file=file)
+        print('{:^6}'.format(oct_data.month), '{:^15.2f}'.format(oct_data.mean), '{:^10.2f}'.format(oct_data.pdf_mean),
+              '{:^10.2f}'.format(oct_data.variance), file=file)
+        print('{:^6}'.format(all_data.month), '{:^15.2f}'.format(all_data.mean), '{:^10.2f}'.format(all_data.pdf_mean),
+              '{:^10.2f}'.format(all_data.variance), '\n', file=file)
 
-    ''' 3.(c) Overlay a Weibull and Rayleigh distribution on the pdfs and determine
-        a best fit for each. '''
+        ''' 3.(c) Overlay a Weibull and Rayleigh distribution on the pdfs and determine
+            a best fit for each. '''
 
-    plt.figure()
-    jan_data.plot_pdf_fit("Jan")
-    plt.figure()
-    apr_data.plot_pdf_fit("Apr")
-    plt.figure()
-    jul_data.plot_pdf_fit("Jul")
-    plt.figure()
-    oct_data.plot_pdf_fit("Oct")
-    plt.figure()
-    all_data.plot_pdf_fit("All")
+        plt.figure()
+        jan_data.plot_pdf_fit("Jan")
+        plt.savefig(filename="output\step2_histogram_jan.png", format="png")
+        file.write('\n' + "Jan Weibull Parameters: {:.3f} {:.3f} {:.3f} {:.3f}".format(*jan_data.weibull_params) + '\n')
+        file.write("Jan Rayleigh Parameters: {:.3f} {:.3f}".format(*jan_data.rayleigh_params) + '\n')
+        plt.figure()
+        apr_data.plot_pdf_fit("Apr")
+        plt.savefig(filename="output\step2_histogram_apr.png", format="png")
+        file.write('\n' + "Apr Weibull Parameters: {:.3f} {:.3f} {:.3f} {:.3f}".format(*apr_data.weibull_params) + '\n')
+        file.write("Apr Rayleigh Parameters: {:.3f} {:.3f}".format(*apr_data.rayleigh_params) + '\n')
+        plt.figure()
+        jul_data.plot_pdf_fit("Jul")
+        plt.savefig(filename="output\step2_histogram_jul.png", format="png")
+        file.write('\n' + "Jul Weibull Parameters: {:.3f} {:.3f} {:.3f} {:.3f}".format(*jul_data.weibull_params) + '\n')
+        file.write("Jul Rayleigh Parameters: {:.3f} {:.3f}".format(*jul_data.rayleigh_params) + '\n')
+        plt.figure()
+        oct_data.plot_pdf_fit("Oct")
+        plt.savefig(filename="output\step2_histogram_oct.png", format="png")
+        file.write('\n' + "Oct Weibull Parameters: {:.3f} {:.3f} {:.3f} {:.3f}".format(*oct_data.weibull_params) + '\n')
+        file.write("Oct Rayleigh Parameters: {:.3f} {:.3f}".format(*oct_data.rayleigh_params) + '\n')
+        plt.figure()
+        all_data.plot_pdf_fit("All")
+        plt.savefig(filename="output\step2_histogram_all.png", format="png")
+        file.write('\n' + "All Data Weibull Parameters: {:.3f} {:.3f} {:.3f} {:.3f}".format(*all_data.weibull_params) + '\n')
+        file.write("All Data Rayleigh Parameters: {:.3f} {:.3f}".format(*all_data.rayleigh_params) + '\n')
 
-    plt.show()
+        # plt.show()

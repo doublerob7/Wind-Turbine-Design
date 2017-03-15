@@ -12,10 +12,8 @@ Homework #4
 """ Setup """
 import numpy as np
 import matplotlib.pyplot as plt
-from functions import BEM
-from operator import itemgetter
 
-
+# TODO: implement functions into class
 # class Beam:
 #     def __init__(self, length, width, height, elastic_mod):
 #         self.length = length
@@ -179,7 +177,7 @@ def linear_def(x_list, theta_list):
 
 if __name__ == "__main__":
 
-    from HW3 import TurbineBlade
+    from Step_3 import TurbineBlade
 
     debug = True
 
