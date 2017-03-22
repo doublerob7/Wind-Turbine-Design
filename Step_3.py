@@ -29,6 +29,14 @@ class TurbineBlade:
         self.file_names = filenames
         self.omega = (float(RPM)/60) * 2 * pi  # rads/s
         self.num_sections = len(section_radii)
+        self.reset_values()
+
+        try:
+            assert len(filenames) == len(section_radii)
+        except AssertionError:
+            print('filenames must be the same length as section_radii')
+
+    def reset_values(self):
         self._thrust = None
         self._torque = None
         self._power = None
@@ -40,11 +48,6 @@ class TurbineBlade:
         self._sec_alpha_corr = []
         self._sec_norm_coef_uncorr = []
         self._sec_tang_coef_uncorr = []
-
-        try:
-            assert len(filenames) == len(section_radii)
-        except AssertionError:
-            print('filenames must be the same length as section_radii')
 
     @staticmethod
     def get_CLCD(filename, alpha):
@@ -182,9 +185,11 @@ class TurbineBlade:
         F_N_corr = C_N_corr * .5 * rho * chord * (w ** 2)
         F_T_corr = C_T_corr * .5 * rho * chord * (w ** 2)
 
+        # print("BEM ran!")
         return alpha_deg, alpha_corr_deg, C_N_corr, C_T_corr, F_N_corr, F_T_corr, C_N, C_T
 
     def calculations(self, ux1=10, num_blades=3, rho=1.23, debug=False):
+        self.reset_values()
         for file, radius, theta_P, chord in zip(self.file_names, self.sec_radii, self.sec_theta_p, self.sec_chord):
             a, a_corr, C_N_corr, C_T_corr, F_N, F_T, C_N, C_T = self.blade_element_momentum(file, radius, theta_P, chord, ux1, num_blades, rho, debug)
             self._sec_alpha.append(a)
@@ -195,6 +200,8 @@ class TurbineBlade:
             self._sec_tang_force.append(F_T)
             self._sec_norm_coef_uncorr.append(C_N)
             self._sec_tang_coef_uncorr.append(C_T)
+        # print("Calculations ran!")
+        return self
 
     @property
     def thrust(self):
@@ -272,7 +279,7 @@ if __name__ == '__main__':
     blade = TurbineBlade(length=R, min_aero_radius=blade_min_r, section_radii=r, section_twist=theta_p,
                          section_chord=chord, RPM=RPM, filenames=filenames)
 
-    blade.calculations(ux1=ux1, num_blades=N_blades, rho=rho, debug=True)
+    blade.calculations(ux1=ux1, num_blades=N_blades, rho=rho, debug=False)
 
 
     """ (a) Plot the local angle of attack, alpha, in degrees as a function of r.
@@ -322,6 +329,9 @@ if __name__ == '__main__':
 
     """ (c) Determine total Thrust, Torque and Power experienced by the blades
     using the Prantl correction. """
+    print('Total Thrust:  {0:.2f} kN'.format(N_blades * blade.thrust * 10 ** -3))
+    print('Total Torque:  {0:.2f} kN m'.format(N_blades * blade.torque * 10 ** -3))
+    print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3))
 
     with open("output\step3_hub_parameters.txt", "w") as file:
         # Thrust: the total normal force acting along the entire length of all 3 blades
@@ -333,4 +343,4 @@ if __name__ == '__main__':
         # Power: torque x angular velocity
         print('Total Power:  {0:.2f} kW'.format(N_blades * blade.power * 10 ** -3), file=file)
 
-    plot.show()
+    # plot.show()
