@@ -29,6 +29,14 @@ class TurbineBlade:
         self.file_names = filenames
         self.omega = (float(RPM)/60) * 2 * pi  # rads/s
         self.num_sections = len(section_radii)
+        self.reset_values()
+
+        try:
+            assert len(filenames) == len(section_radii)
+        except AssertionError:
+            print('filenames must be the same length as section_radii')
+
+    def reset_values(self):
         self._thrust = None
         self._torque = None
         self._power = None
@@ -40,11 +48,6 @@ class TurbineBlade:
         self._sec_alpha_corr = []
         self._sec_norm_coef_uncorr = []
         self._sec_tang_coef_uncorr = []
-
-        try:
-            assert len(filenames) == len(section_radii)
-        except AssertionError:
-            print('filenames must be the same length as section_radii')
 
     @staticmethod
     def get_CLCD(filename, alpha):
@@ -182,9 +185,11 @@ class TurbineBlade:
         F_N_corr = C_N_corr * .5 * rho * chord * (w ** 2)
         F_T_corr = C_T_corr * .5 * rho * chord * (w ** 2)
 
+        # print("BEM ran!")
         return alpha_deg, alpha_corr_deg, C_N_corr, C_T_corr, F_N_corr, F_T_corr, C_N, C_T
 
     def calculations(self, ux1=10, num_blades=3, rho=1.23, debug=False):
+        self.reset_values()
         for file, radius, theta_P, chord in zip(self.file_names, self.sec_radii, self.sec_theta_p, self.sec_chord):
             a, a_corr, C_N_corr, C_T_corr, F_N, F_T, C_N, C_T = self.blade_element_momentum(file, radius, theta_P, chord, ux1, num_blades, rho, debug)
             self._sec_alpha.append(a)
@@ -195,6 +200,7 @@ class TurbineBlade:
             self._sec_tang_force.append(F_T)
             self._sec_norm_coef_uncorr.append(C_N)
             self._sec_tang_coef_uncorr.append(C_T)
+        # print("Calculations ran!")
         return self
 
     @property
