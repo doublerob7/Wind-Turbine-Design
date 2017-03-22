@@ -254,7 +254,7 @@ if __name__ == "__main__":
     dy_dx = angular_def(x, E, Ix, moment_norm)
     dy = linear_def(x, dy_dx)
 
-    dz_dx = angular_def(x, E, Ix, moment_tang)
+    dz_dx = angular_def(x, E, Iy, moment_tang)
     dz = linear_def(x, dz_dx)
 
     if debug:
