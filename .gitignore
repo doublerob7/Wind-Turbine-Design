@@ -4,3 +4,4 @@ pdfs/
 __pycache__/
 test.py
 weibull-test.py
+turbine.py

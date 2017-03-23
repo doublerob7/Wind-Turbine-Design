@@ -10,8 +10,6 @@ ME 4470 Wind Ocean Energy Homework 5
 """
 
 import numpy as np
-import matplotlib.pyplot as plot
-from Step_3 import TurbineBlade
 
 
 class Hub:
@@ -84,6 +82,7 @@ if __name__ == "__main__":
     a gearbox. The output goal of this turbine is 425 kW. Torque and power information for the generator is provided
     below. Recall that the turbine was rotating at 30 rpm. However, the input to this generator must be 1800 rpm."""
 
+    import matplotlib.pyplot as plot
     from Step_3 import TurbineBlade
     import copy
 

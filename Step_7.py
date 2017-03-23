@@ -9,18 +9,6 @@ Final - Energy Storage
 @author: robert
 """
 
-"""Clears all the variables from the workspace of the spyder application."""
-def clear_all():
-    gl = globals().copy()
-    for var in gl:
-        if var[0] == '_': continue
-        if 'func' in str(globals()[var]): continue
-        if 'module' in str(globals()[var]): continue
-
-        del globals()[var]
-if __name__ == "__main__":
-    clear_all()
-
 	
 ''' ========================== powerLaw(u,uref,z,zref,alpha) ==================
 Normalizes wind speeds from ground height to hub height according to the power 
@@ -134,11 +122,11 @@ def ReadWindData(filename):
                 lastdataline = [dttm,timemin,windspeed,winddir,pres,temp]
                 
         except:
-            print 'Whoa! Something bad happened!'
-            print reads, datapoints, dttm
-            print compiledyears, year, yearentry
+            print('Whoa! Something bad happened!')
+            print(reads, datapoints, dttm)
+            print(compiledyears, year, yearentry)
                 
-    print reads,'Datalines read,',datapoints,'Datapoints kept,',badDataCount,'Datapoints duplicated.'     
+    print(reads,'Datalines read,',datapoints,'Datapoints kept,',badDataCount,'Datapoints duplicated.')
     try:
         return data
     except:
@@ -148,7 +136,6 @@ def ReadWindData(filename):
 
 
 ''' Setup '''
-clear_all()
 import numpy as np
 import matplotlib.pyplot as plot
 
@@ -166,8 +153,8 @@ Econs = Econs[:]
 
 ''' Energy produced per hour per turbine'''
 powerCurve = [[0,3,4,6,8,10,12,13.6,25.5,25.6],[0.0,0.0,7.3,78.8,190.9,327.6,412.6,425.0,425.0,0.0]]
-jandata = ReadWindData('Laramie01_2015.dat')[0][0]
-juldata = ReadWindData('Laramie07_2015.dat')[0][6]
+jandata = ReadWindData('data\Laramie01_2015.dat')[0][0]
+juldata = ReadWindData('data\Laramie07_2015.dat')[0][6]
 
 for mo in [jandata, juldata]:
     
@@ -208,8 +195,7 @@ for mo in [jandata, juldata]:
     
     # Set the starting point for energy stored
     Estored[0] = Estored_start
-    
-    
+
     # (a) Calculate the the number of turbines required to end with a positive value in storage
 	
     while Estored[len(Estored)-1] <= 0:
@@ -223,7 +209,7 @@ for mo in [jandata, juldata]:
     Estored_capacity = sum(Enet)
     Estored_start = Estored_capacity
     
-    print '\nSolution found! You need', Nturbines,'Turbines.'
+    print('\nSolution found! You need', Nturbines, 'Turbines.')
     
         
     # (b) Plot power produced and power demanded
@@ -262,16 +248,16 @@ for mo in [jandata, juldata]:
     plot.ylabel('Power [MW]')
     plot.grid()
     
-    print 'Storage Capacity:', int(Estored_capacity)*10**-3 ,'MW, with a starting point of {0:.2f}%'.format(Estored_start/Estored_capacity*100)
+    print('Storage Capacity:', int(Estored_capacity)*10**-3 ,'MW, with a starting point of {0:.2f}%'.format(Estored_start/Estored_capacity*100))
     
     
     # (d) Interpret storage capacity in terms of hours on a 500 MW Thermal power plant
     
     ThermalEQhrs = Estored_capacity / (500*10**3)
-    print 'That\'s equivalent to {0:.2f} hours on a 500 MW thermal power plant!\n'.format(ThermalEQhrs)
+    print('That\'s equivalent to {0:.2f} hours on a 500 MW thermal power plant!\n'.format(ThermalEQhrs))
     
     
-    
+    plot.show()
     
     del Eprod, power, Enet, removable
     Estored_start = 0

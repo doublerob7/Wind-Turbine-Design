@@ -188,10 +188,12 @@ class TurbineBlade:
         # print("BEM ran!")
         return alpha_deg, alpha_corr_deg, C_N_corr, C_T_corr, F_N_corr, F_T_corr, C_N, C_T
 
-    def calculations(self, ux1=10, num_blades=3, rho=1.23, debug=False):
+    def calculations(self, ux1=10, num_blades=3, rho=1.23, pitch=0, debug=False):
         self.reset_values()
         for file, radius, theta_P, chord in zip(self.file_names, self.sec_radii, self.sec_theta_p, self.sec_chord):
-            a, a_corr, C_N_corr, C_T_corr, F_N, F_T, C_N, C_T = self.blade_element_momentum(file, radius, theta_P, chord, ux1, num_blades, rho, debug)
+            a, a_corr, C_N_corr, C_T_corr, F_N, F_T, C_N, C_T = self.blade_element_momentum(file, radius, theta_P +
+                                                                                            pitch, chord, ux1,
+                                                                                            num_blades, rho, debug)
             self._sec_alpha.append(a)
             self._sec_alpha_corr.append(a_corr)
             self._sec_norm_coef.append(C_N_corr)
