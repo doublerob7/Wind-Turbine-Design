@@ -11,11 +11,10 @@ from Step_5 import Hub, GearBox, Generator
 
 if __name__ == "__main__":
     """A pitch controlled, constant rotational velocity wind turbine typically operates using one total blade pitch
-     theta_p_b_1 (the blade pitch setting at the root) at velocities that produce less than rated power. A higher wind
-     velocities, the entire blade is pitched to create increased pitch angles (theta_p) along the blade (this decreases
+     theta_p_b_1 (the blade pitch setting at the root) at velocities that produce less than rated power. At higher wind
+     velocities, the entire blade is pitched to create increased angles (theta_p) along the blade (this decreases
      the angle of attack) in order to maintain the torque constant such that the generator produces the rated power.
-     The turbine power curve schematic below shows this process as a series of curves for different total blade
-     pitch."""
+     """
 
     import matplotlib.pyplot as plot
     from Step_3 import TurbineBlade

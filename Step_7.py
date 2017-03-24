@@ -37,6 +37,8 @@ EXAMPLE:
 data[3][5][2] would be the windspeed array from the 4th year, 6th month. This
 could easily be averaged by np.mean(data[3][5][2])
 '''
+
+
 def ReadWindData(filename):
     
     import numpy as np    
@@ -133,6 +135,34 @@ def ReadWindData(filename):
         return 0
 
 
+class WindPlant:
+
+    def __init__(self, turbine, num_turbines=0, load=None):
+        self.turbine = turbine
+        self.n_turbines = num_turbines
+        self.load = load
+        self.e_stored = 0
+        self.capacity = 0
+
+    def power(self):
+        return self.n_turbines * -self.turbine.generator.power()
+
+    def turbines_needed(self, load):
+        if self.load is None:
+            self.load = load
+
+        while self.e_stored <= 0:
+            self.n_turbines += 1
+            e_net = (self.power() * self.n_turbines) - Econs
+            for i, each in enumerate(e_net):
+                Estored[i + 1] = Estored[i] + each
+
+        Egradient = np.gradient(Enet)
+
+        Estored_capacity = sum(Enet)
+        Estored_start = Estored_capacity
+
+        print('\nSolution found! You need', Nturbines, 'Turbines.')
 
 
 ''' Setup '''
